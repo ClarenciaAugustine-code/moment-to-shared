@@ -1,0 +1,1477 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Moment to Shared</title>
+  <meta name="description" content="Sebuah museum kecil berisi kenangan kita." />
+  <meta name="theme-color" content="#17120f" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- ============ MAINTENANCE (diatur di maintenance.js) ============ -->
+  <script src="maintenance.js"></script>
+  <script src="js/gate.js"></script>
+  <section id="gate" aria-hidden="true">
+    <div class="gate-inner">
+      <svg class="gate-rope" viewBox="0 0 320 120" aria-hidden="true">
+        <defs>
+          <linearGradient id="brass" x1="0" x2="1"><stop offset="0" stop-color="#8a6a3a"/><stop offset=".45" stop-color="#e6cf9f"/><stop offset="1" stop-color="#8a6a3a"/></linearGradient>
+          <linearGradient id="velvet" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a83a42"/><stop offset="1" stop-color="#5a1218"/></linearGradient>
+        </defs>
+        <path class="rope" d="M40 34 C 110 104, 210 104, 280 34" fill="none" stroke="url(#velvet)" stroke-width="9" stroke-linecap="round"/>
+        <g fill="url(#brass)">
+          <circle cx="40" cy="22" r="11"/><rect x="35" y="30" width="10" height="78" rx="3"/><rect x="22" y="106" width="36" height="8" rx="4"/>
+          <circle cx="280" cy="22" r="11"/><rect x="275" y="30" width="10" height="78" rx="3"/><rect x="262" y="106" width="36" height="8" rx="4"/>
+        </g>
+        <g class="placard">
+          <line x1="160" y1="85" x2="160" y2="92" stroke="#c9a66b" stroke-width="1.2"/>
+          <rect x="112" y="92" width="96" height="26" rx="3" fill="#fbf6ec" stroke="#c9a66b"/>
+          <text x="160" y="109" text-anchor="middle">SEDANG DITATA</text>
+        </g>
+      </svg>
+      <p class="eyebrow">Moment to Shared</p>
+      <h1 class="gate-title" id="gateTitle">Pameran sedang ditata</h1>
+      <p class="gate-msg" id="gateMsg">Kenangan kalian lagi dibingkai satu per satu. Sabar ya, sebentar lagi pintunya dibuka.</p>
+      <div class="gate-count" id="gateCount" hidden>
+        <div class="gc-cells">
+          <div><b data-u="d">0</b><small>hari</small></div>
+          <div><b data-u="h">00</b><small>jam</small></div>
+          <div><b data-u="m">00</b><small>menit</small></div>
+          <div><b data-u="s">00</b><small>detik</small></div>
+        </div>
+        <p class="gc-when" id="gateWhen"></p>
+      </div>
+      <div class="ornament">✦</div>
+      <button type="button" class="gate-owner" id="gateOwnerBtn">kurator?</button>
+      <form id="gateForm" class="gate-form" hidden autocomplete="off">
+        <input id="gateCode" type="password" autocomplete="new-password" placeholder="Kode pemilik" aria-label="Kode pemilik" />
+        <button type="submit">Masuk</button>
+        <p class="gate-err" id="gateErr" role="status"></p>
+      </form>
+    </div>
+  </section>
+  <canvas id="scene" tabindex="0" aria-label="Lorong museum 3D"></canvas>
+
+  <!-- ============ INTRO ============ -->
+  <section id="intro">
+    <div class="intro-inner">
+      <p class="eyebrow">Pameran Perpisahan</p>
+      <h1 id="introTitle">Moment to Shared</h1>
+      <p id="introSub">Sebuah pameran kecil tentang kita.</p>
+      <div class="ornament">✦</div>
+      <button class="btn-enter" id="enterBtn" disabled>Menata galeri…</button>
+      <p class="intro-meta" id="introMeta">🎧 nyalakan suara untuk pengalaman terbaik</p>
+      <div id="introError" hidden></div>
+    </div>
+  </section>
+
+  <!-- ============ HUD ============ -->
+  <header id="hud">
+    <div class="brand"><small>Pameran Tetap</small><span id="brandTitle">Moment to Shared</span></div>
+    <div class="hud-actions">
+      <span class="pill" title="Diary yang sudah terbuka">🔓 <b id="openCount">0</b>/<span id="totalCount">0</span></span>
+      <button class="pill" id="dirBtn" aria-label="Daftar nama">☰ <span class="label">Daftar Nama</span></button>
+      <button class="pill" id="muteBtn" aria-label="Musik">🔊</button>
+    </div>
+  </header>
+  <div id="hint"></div>
+  <div id="rail"><div id="railMarker"></div></div>
+  <div id="tooltip"></div>
+  <div class="preview-badge" id="previewBadge">Mode preview · belum dienkripsi</div>
+
+  <!-- ============ DAFTAR NAMA ============ -->
+  <aside id="directory" aria-hidden="true">
+    <div class="dir-head">
+      <small>Katalog Koleksi</small>
+      <h2>Daftar Pengunjung</h2>
+      <button class="dir-close" id="dirClose" aria-label="Tutup">✕</button>
+      <input class="dir-search" id="dirSearch" type="search" placeholder="Cari namamu…" autocomplete="off" />
+    </div>
+    <ul class="dir-list" id="dirList"></ul>
+  </aside>
+
+  <!-- ============ MODAL PASSWORD ============ -->
+  <div class="modal" id="lockModal" aria-hidden="true">
+    <div class="lock-card" id="lockCard" role="dialog" aria-modal="true" aria-labelledby="lockName">
+      <button class="close-x" id="lockClose" aria-label="Tutup">✕</button>
+      <div class="lock-seal"><span id="lockIcon">🔒</span><span class="lock-ico">🔒</span></div>
+      <p class="lock-no" id="lockNo">Arsip No. 01</p>
+      <h2 class="lock-name" id="lockName">Nama</h2>
+      <p class="lock-desc">Kenangan ini masih terkunci. Tebak passwordnya untuk membuka diary-nya.</p>
+      <div class="lock-hint" id="lockHint"><small>Petunjuk</small><span></span></div>
+      <div class="lock-hint extra" id="lockHint2"><small>Petunjuk tambahan</small><span></span></div>
+      <form class="lock-form" id="lockForm" autocomplete="off">
+        <input class="lock-input" id="lockInput" type="text" placeholder="Ketik password…" autocapitalize="off" spellcheck="false" />
+        <button class="lock-btn" id="lockBtn" type="submit">Buka</button>
+      </form>
+      <p class="lock-msg" id="lockMsg"></p>
+    </div>
+  </div>
+
+  <!-- ============ DIARY (buku) ============ -->
+  <div id="diary" aria-hidden="true">
+    <div class="fb-top">
+      <button class="np-chip" id="npBtn" title="Matikan / nyalakan musik"><span class="eq"><i></i><i></i><i></i><i></i></span><span class="np-title" id="npTitle"></span></button>
+      <button class="fb-close" id="diaryClose" aria-label="Tutup diary">✕</button>
+    </div>
+    <div class="fb-wrap"><div class="fb-stage" id="fbStage"></div></div>
+    <div class="fb-controls">
+      <button class="fb-nav" id="fbPrev" aria-label="Halaman sebelumnya">‹</button>
+      <span class="fb-count" id="fbCount">Sampul</span>
+      <button class="fb-nav" id="fbNext" aria-label="Halaman berikutnya">›</button>
+    </div>
+    <p class="fb-tip" id="fbTip"></p>
+  </div>
+
+  <div id="lightbox" aria-hidden="true">
+    <button class="lb-close" id="lbClose" aria-label="Tutup">✕</button>
+    <button class="lb-btn lb-prev" id="lbPrev" aria-label="Sebelumnya">‹</button>
+    <figure><img id="lbImg" alt="" /><figcaption id="lbCap"></figcaption></figure>
+    <button class="lb-btn lb-next" id="lbNext" aria-label="Berikutnya">›</button>
+  </div>
+  <div id="toast" role="status"></div>
+  <div id="confetti"></div>
+  <div id="ytHolder"></div>
+
+  <!-- Enkripsi. data/museum.js (dibuat rahasia/build.html) dimuat setelah gerbang maintenance lewat -->
+  <!-- Efek buku yang bisa dibalik -->
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+  <script src="js/crypto.js"></script>
+  <script>
+    // Kalau Three.js gagal dimuat (misal offline), kasih tahu.
+    setTimeout(function () {
+      if (!window.__museumBooted && !document.body.classList.contains('maint')) {
+        var b = document.getElementById('enterBtn');
+        b.textContent = 'Gagal memuat 3D';
+        var e = document.getElementById('introError');
+        e.hidden = false; e.className = 'intro-error';
+        e.innerHTML = 'Museum 3D butuh koneksi internet (Three.js & font dimuat dari CDN). Cek koneksi lalu muat ulang halaman.';
+      }
+    }, 12000);
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+    import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+
+    window.__museumBooted = true;
+    const MC = window.MuseumCrypto;
+    const $ = (s, el = document) => el.querySelector(s);
+    const params = new URLSearchParams(location.search);
+    const IS_FILE = location.protocol === 'file:';
+    const IS_TOUCH = matchMedia('(pointer: coarse)').matches;
+    const TAU = Math.PI * 2;
+
+    const store = {
+      get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+      set(k, v) { try { localStorage.setItem(k, v); } catch (e) { } },
+      del(k) { try { localStorage.removeItem(k); } catch (e) { } },
+    };
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const no2 = (i) => String(i + 1).padStart(2, '0');
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    let toastT;
+    function toast(msg, ms = 3400) {
+      const t = $('#toast'); t.innerHTML = msg; t.classList.add('show');
+      clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), ms);
+    }
+    function loadScript(src) {
+      return new Promise((res, rej) => {
+        const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s);
+      });
+    }
+    function mulberry(seed) {
+      let s = seed >>> 0;
+      return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    }
+    const DEFAULT_COLORS = ['#e8a87c', '#d4a5c9', '#8fb9a8', '#f2c57c', '#9db4e0', '#e59a9a', '#b5c99a', '#c3a6e8'];
+
+    /* =====================================================
+       DATA
+       ===================================================== */
+    let MODE = 'secure', CONFIG = {}, PEOPLE = [];
+    async function loadData() {
+      if (!params.has('preview')) { try { await loadScript('data/museum.js'); } catch (e) { } }
+      if (window.MUSEUM && !params.has('preview')) {
+        MODE = 'secure';
+        CONFIG = window.MUSEUM_CONFIG || {};
+        PEOPLE = window.MUSEUM.map((p, i) => ({ ...p, index: i }));
+      } else {
+        // Mode preview: baca langsung data mentah (hanya ada di komputermu).
+        try { await loadScript('../rahasia/friends.js'); } catch (e) { }
+        if (!window.FRIENDS) return false;
+        MODE = 'preview';
+        CONFIG = window.MUSEUM_CONFIG || {};
+        PEOPLE = window.FRIENDS.map((f, i) => ({ ...MC.publicPart(f, i), index: i, _plain: f }));
+      }
+      PEOPLE.forEach((p, i) => {
+        p.color = p.color || DEFAULT_COLORS[MC.hash(p.name) % DEFAULT_COLORS.length];
+        p.icon = p.icon || '';
+        p.unlocked = false; p.data = null;
+      });
+      return PEOPLE.length > 0;
+    }
+    async function unlockWith(p, answer) {
+      if (MODE === 'secure') return MC.open(p.sealed, answer);
+      const ok = MC.answersOf(p._plain).includes(MC.normalize(answer));
+      return ok ? MC.privatePart(p._plain) : null;
+    }
+
+    async function fontsReady() {
+      if (!document.fonts) return;
+      try {
+        await Promise.race([
+          Promise.all([
+            document.fonts.load('500 64px "Cormorant Garamond"'),
+            document.fonts.load('italic 500 64px "Cormorant Garamond"'),
+            document.fonts.load('600 40px "Caveat"'),
+            document.fonts.load('500 20px "DM Sans"'),
+          ]),
+          sleep(3000),
+        ]);
+      } catch (e) { }
+    }
+
+    /* =====================================================
+       AUDIO  (mp3 atau YouTube)
+       ===================================================== */
+    const AudioState = { muted: store.get('mk:muted') === '1', lobby: null, diary: null };
+
+    function makeChannel(song, label) {
+      if (!song || (!song.src && !song.youtube)) return null;
+      if (song.youtube && !String(song.youtube).includes('✏️')) return ytChannel(song, label);
+      if (song.src) return mp3Channel(song, label);
+      return null;
+    }
+    function mp3Channel(song, label) {
+      const a = new Audio();
+      a.loop = song.loop !== false; a.preload = 'auto'; a.volume = 0; a.src = song.src;
+      const vol = song.volume ?? 0.65;
+      let raf;
+      if (song.start) a.addEventListener('loadedmetadata', () => { a.currentTime = song.start; }, { once: true });
+      a.addEventListener('error', () => {
+        if (MODE === 'preview') toast(`🎵 Lagu ${label} belum ada di <b>${esc(song.src)}</b>`);
+      });
+      function fadeTo(v, ms, done) {
+        cancelAnimationFrame(raf);
+        const from = a.volume, t0 = performance.now();
+        const step = (t) => {
+          const k = Math.min(1, (t - t0) / ms);
+          a.volume = clamp(from + (v - from) * k, 0, 1);
+          if (k < 1) raf = requestAnimationFrame(step); else if (done) done();
+        };
+        raf = requestAnimationFrame(step);
+      }
+      return {
+        song,
+        play() { a.muted = AudioState.muted; const pr = a.play(); if (pr) pr.catch(() => { }); fadeTo(vol, 1200); },
+        pause() { fadeTo(0, 700, () => a.pause()); },
+        stop() { fadeTo(0, 500, () => { a.pause(); a.removeAttribute('src'); a.load(); }); },
+        setMuted(m) { a.muted = m; },
+      };
+    }
+    function ytChannel(song, label) {
+      let iframe = null;
+      const id = song.youtube;
+      const cmd = (func, args = []) => { try { iframe?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), '*'); } catch (e) { } };
+      if (IS_FILE && MODE === 'preview') toast('🎵 Lagu YouTube baru bisa diputar kalau website sudah online / pakai Live Server.');
+      return {
+        song,
+        play() {
+          if (!iframe) {
+            iframe = document.createElement('iframe');
+            const q = new URLSearchParams({ autoplay: 1, loop: 1, playlist: id, controls: 0, enablejsapi: 1, start: song.start || 0, playsinline: 1 });
+            iframe.src = `https://www.youtube.com/embed/${encodeURIComponent(id)}?${q}`;
+            iframe.allow = 'autoplay; encrypted-media';
+            iframe.width = 200; iframe.height = 200; iframe.title = song.title || 'musik';
+            iframe.addEventListener('load', () => setTimeout(() => {
+              cmd('setVolume', [Math.round((song.volume ?? 0.65) * 100)]);
+              if (AudioState.muted) cmd('mute');
+              cmd('playVideo');
+            }, 500));
+            $('#ytHolder').appendChild(iframe);
+          } else cmd('playVideo');
+        },
+        pause() { cmd('pauseVideo'); },
+        stop() { if (iframe) { iframe.remove(); iframe = null; } },
+        setMuted(m) { cmd(m ? 'mute' : 'unMute'); },
+      };
+    }
+    function setMuted(m) {
+      AudioState.muted = m; store.set('mk:muted', m ? '1' : '0');
+      AudioState.lobby?.setMuted(m); AudioState.diary?.setMuted(m);
+      $('#muteBtn').textContent = m ? '🔇' : '🔊';
+      $('#npBtn')?.classList.toggle('muted', m);
+    }
+
+    /* =====================================================
+       3D SCENE
+       ===================================================== */
+    const EYE = 1.65;
+    const W = 4.4, H = 5.6, SPACING = 4.8;
+    const ART_W = 1.5, ART_H = 1.95, MAT = 0.16, MOULD = 0.13;
+    const IN_W = ART_W + MAT * 2, IN_H = ART_H + MAT * 2;
+    const OUT_W = IN_W + MOULD * 2, OUT_H = IN_H + MOULD * 2;
+    const FRAME_Y = 2.6;
+    const FIRST_Z = -6, ENTRANCE_Z = 6.5, START_Z = 4.8, Z_MAX = 3.4;
+    const VIEW_DIST = 3.7;
+    let N, SLOTS, LAST_Z, END_Z, Z_MIN, LEN, MID;
+
+    let renderer, scene, camera, dust, dustBase, dustPhase;
+    const frames = [];
+    const pickables = [];
+    const cam = { x: 0, z: START_Z, yaw: 0, pitch: 0.02 };
+    const target = { x: 0, z: START_Z, yaw: 0, pitch: 0.02 };
+    let focusIdx = -1, pendingOpen = -1, pendingDeadline = 0;
+
+    function canvasTex(w, h, draw, opts = {}) {
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      draw(c.getContext('2d'), w, h);
+      const t = new THREE.CanvasTexture(c);
+      if (opts.srgb !== false) t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+      if (opts.repeat) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(opts.repeat[0], opts.repeat[1]); }
+      t.userData.canvas = c;
+      return t;
+    }
+
+    // ---------- texture painters ----------
+    function paintPlanks(ctx, w, h) {
+      const rnd = mulberry(7);
+      const cols = 8, cw = w / cols;
+      ctx.fillStyle = '#2b1c13'; ctx.fillRect(0, 0, w, h);
+      for (let c = 0; c < cols; c++) {
+        let y = -rnd() * h * 0.5;
+        while (y < h) {
+          const len = h * (0.35 + rnd() * 0.45);
+          const l = 20 + rnd() * 9, s = 38 + rnd() * 12, hue = 22 + rnd() * 8;
+          ctx.fillStyle = `hsl(${hue},${s}%,${l}%)`;
+          ctx.fillRect(c * cw + 1, y + 1, cw - 2, len - 2);
+          for (let g = 0; g < 9; g++) {
+            ctx.strokeStyle = `rgba(${rnd() < .5 ? '0,0,0' : '255,220,180'},${0.04 + rnd() * 0.05})`;
+            ctx.lineWidth = 1 + rnd() * 2;
+            const gx = c * cw + 4 + rnd() * (cw - 8);
+            ctx.beginPath(); ctx.moveTo(gx, y); ctx.bezierCurveTo(gx + rnd() * 6 - 3, y + len * .3, gx + rnd() * 6 - 3, y + len * .7, gx + rnd() * 4 - 2, y + len); ctx.stroke();
+          }
+          y += len;
+        }
+      }
+    }
+    function paintCarpet(ctx, w, h) {
+      ctx.fillStyle = '#4f1a20'; ctx.fillRect(0, 0, w, h);
+      const rnd = mulberry(3);
+      for (let i = 0; i < 9000; i++) { ctx.fillStyle = `rgba(${rnd() < .5 ? '0,0,0' : '255,180,160'},${rnd() * 0.05})`; ctx.fillRect(rnd() * w, rnd() * h, 2, 2); }
+      ctx.fillStyle = '#c9a66b';
+      ctx.fillRect(14, 0, 5, h); ctx.fillRect(w - 19, 0, 5, h);
+      ctx.fillStyle = 'rgba(201,166,107,.45)';
+      ctx.fillRect(26, 0, 2, h); ctx.fillRect(w - 28, 0, 2, h);
+      ctx.strokeStyle = 'rgba(201,166,107,.28)'; ctx.lineWidth = 2;
+      for (let y = 64; y < h; y += 128) {
+        ctx.beginPath(); ctx.moveTo(w / 2, y - 40); ctx.lineTo(w / 2 + 40, y); ctx.lineTo(w / 2, y + 40); ctx.lineTo(w / 2 - 40, y); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(w / 2, y, 6, 0, TAU); ctx.fillStyle = 'rgba(201,166,107,.35)'; ctx.fill();
+      }
+    }
+    function paintWall(ctx, w, h) {
+      ctx.fillStyle = '#26352c'; ctx.fillRect(0, 0, w, h);
+      const rnd = mulberry(11);
+      for (let i = 0; i < 14000; i++) { ctx.fillStyle = `rgba(${rnd() < .5 ? '0,0,0' : '200,230,210'},${rnd() * 0.035})`; ctx.fillRect(rnd() * w, rnd() * h, 2, 2); }
+      // damask halus
+      ctx.strokeStyle = 'rgba(210,235,215,.045)'; ctx.lineWidth = 2;
+      for (let x = 0; x <= w; x += w / 4) for (let y = 0; y <= h; y += h / 4) {
+        const ox = (Math.round(y / (h / 4)) % 2) * (w / 8);
+        ctx.beginPath(); ctx.ellipse(x + ox, y, 22, 34, 0, 0, TAU); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(x + ox, y, 8, 14, 0, 0, TAU); ctx.stroke();
+      }
+    }
+    function paintWainscot(ctx, w, h) {
+      ctx.fillStyle = '#1b2620'; ctx.fillRect(0, 0, w, h);
+      const pw = w / 2;
+      for (let i = 0; i < 2; i++) {
+        const x = i * pw + 18, y = 18, ww = pw - 36, hh = h - 36;
+        ctx.fillStyle = '#16201b'; ctx.fillRect(x, y, ww, hh);
+        ctx.strokeStyle = 'rgba(201,166,107,.35)'; ctx.lineWidth = 2; ctx.strokeRect(x + 6, y + 6, ww - 12, hh - 12);
+        ctx.strokeStyle = 'rgba(0,0,0,.5)'; ctx.lineWidth = 3; ctx.strokeRect(x, y, ww, hh);
+      }
+    }
+    function paintGlow(ctx, w, h) {
+      ctx.save(); ctx.translate(w / 2, h * 0.42); ctx.scale(1, 1.45);
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, w / 2);
+      g.addColorStop(0, 'rgba(255,214,160,0.95)'); g.addColorStop(0.45, 'rgba(255,196,130,0.42)'); g.addColorStop(1, 'rgba(255,190,120,0)');
+      ctx.fillStyle = g; ctx.fillRect(-w / 2, -h, w, h * 2); ctx.restore();
+    }
+    function paintShadow(ctx, w, h) {
+      ctx.filter = 'blur(14px)';
+      ctx.fillStyle = 'rgba(0,0,0,0.75)'; ctx.fillRect(34, 34, w - 68, h - 68);
+      ctx.filter = 'none';
+    }
+    function paintPool(ctx, w, h) {
+      const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+      g.addColorStop(0, 'rgba(255,205,150,.55)'); g.addColorStop(1, 'rgba(255,205,150,0)');
+      ctx.save(); ctx.translate(0, h / 2); ctx.scale(1, 0.6); ctx.translate(0, -h / 2);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); ctx.restore();
+    }
+    function paintDot(ctx, w, h) {
+      const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+      g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    }
+    function wrapLines(ctx, text, maxW) {
+      const out = [];
+      String(text || '').split('\n').forEach((para) => {
+        let line = '';
+        para.split(' ').forEach((word) => {
+          const test = line ? line + ' ' + word : word;
+          if (ctx.measureText(test).width > maxW && line) { out.push(line); line = word; } else line = test;
+        });
+        out.push(line);
+      });
+      return out;
+    }
+    function fitFont(ctx, text, maxW, size, tpl) {
+      let s = size; ctx.font = tpl(s);
+      while (ctx.measureText(text).width > maxW && s > 12) { s -= 2; ctx.font = tpl(s); }
+      return s;
+    }
+    function paintPanel(ctx, w, h, { kicker, title, body, sign }) {
+      ctx.fillStyle = '#f6efe2'; ctx.fillRect(0, 0, w, h);
+      const rnd = mulberry(5);
+      for (let i = 0; i < 9000; i++) { ctx.fillStyle = `rgba(120,90,60,${rnd() * 0.05})`; ctx.fillRect(rnd() * w, rnd() * h, 2, 2); }
+      ctx.strokeStyle = 'rgba(160,130,80,.6)'; ctx.lineWidth = 3; ctx.strokeRect(34, 34, w - 68, h - 68);
+      ctx.lineWidth = 1; ctx.strokeRect(46, 46, w - 92, h - 92);
+      ctx.fillStyle = '#9a8060'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '500 26px "DM Sans", sans-serif';
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '10px';
+      ctx.fillText((kicker || '').toUpperCase(), w / 2, h * 0.2);
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+      ctx.fillStyle = '#2a1f17';
+      fitFont(ctx, title, w - 180, 130, (s) => `italic 500 ${s}px "Cormorant Garamond", Georgia, serif`);
+      ctx.fillText(title, w / 2, h * 0.38);
+      ctx.font = '400 40px "Cormorant Garamond", Georgia, serif'; ctx.fillStyle = '#4a3b2e';
+      const lines = wrapLines(ctx, body, w - 260).slice(0, 4);
+      lines.forEach((l, k) => ctx.fillText(l, w / 2, h * 0.56 + k * 50));
+      if (sign) { ctx.font = '600 54px "Caveat", cursive'; ctx.fillStyle = '#6b4a2e'; ctx.fillText(sign, w / 2, h * 0.84); }
+    }
+
+    // ---------- lukisan per orang ----------
+    const PATTERNS = [
+      function rings(ctx, w, h, rnd, col) {
+        const cx = w * (0.25 + rnd() * 0.5), cy = h * (0.25 + rnd() * 0.5);
+        for (let r = 24; r < h * 1.3; r += 22 + rnd() * 22) {
+          ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.lineWidth = 5 + rnd() * 16;
+          ctx.strokeStyle = col(rnd() * 60 - 30, 50, 38 + rnd() * 40, 0.33); ctx.stroke();
+        }
+      },
+      function waves(ctx, w, h, rnd, col) {
+        const bands = 8;
+        for (let b = 0; b < bands; b++) {
+          const y0 = h * (b + 0.4) / bands, amp = 14 + rnd() * 26, fr = 0.8 + rnd() * 2, ph = rnd() * TAU;
+          ctx.beginPath(); ctx.moveTo(0, h); ctx.lineTo(0, y0);
+          for (let x = 0; x <= w; x += 8) ctx.lineTo(x, y0 + Math.sin(x / w * TAU * fr + ph) * amp);
+          ctx.lineTo(w, h); ctx.closePath(); ctx.fillStyle = col(b * 8 - 30, 48, 80 - b * 6, 0.5); ctx.fill();
+        }
+      },
+      function petals(ctx, w, h, rnd, col) {
+        const n = 6 + Math.floor(rnd() * 6), cx = w / 2, cy = h * 0.45;
+        for (let layer = 0; layer < 3; layer++) {
+          const R = w * (0.46 - layer * 0.12);
+          for (let k = 0; k < n; k++) {
+            ctx.save(); ctx.translate(cx, cy); ctx.rotate(k / n * TAU + layer * 0.35);
+            ctx.beginPath(); ctx.ellipse(0, -R * 0.5, R * 0.19, R * 0.5, 0, 0, TAU);
+            ctx.fillStyle = col(layer * 18 - 20, 55, 72 - layer * 10, 0.42); ctx.fill(); ctx.restore();
+          }
+        }
+      },
+      function night(ctx, w, h, rnd, col) {
+        const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, col(0, 40, 20)); g.addColorStop(1, col(30, 45, 38));
+        ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+        for (let i = 0; i < 160; i++) { ctx.fillStyle = `rgba(255,248,230,${0.3 + rnd() * 0.7})`; ctx.beginPath(); ctx.arc(rnd() * w, rnd() * h, rnd() * 2.2, 0, TAU); ctx.fill(); }
+        ctx.fillStyle = 'rgba(255,240,210,.95)'; ctx.beginPath(); ctx.arc(w * 0.76, h * 0.17, 46, 0, TAU); ctx.fill();
+        ctx.fillStyle = col(0, 40, 21); ctx.beginPath(); ctx.arc(w * 0.76 + 22, h * 0.17 - 10, 42, 0, TAU); ctx.fill();
+      },
+      function blobs(ctx, w, h, rnd, col) {
+        for (let k = 0; k < 9; k++) {
+          const x = rnd() * w, y = rnd() * h, r = w * (0.22 + rnd() * 0.38);
+          const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+          g.addColorStop(0, col(rnd() * 100 - 50, 65, 66, 0.75)); g.addColorStop(1, col(0, 65, 66, 0));
+          ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+        }
+      },
+      function arches(ctx, w, h, rnd, col) {
+        ctx.fillStyle = col(30, 70, 70, 0.9); ctx.beginPath(); ctx.arc(w * (0.3 + rnd() * 0.4), h * 0.2, 50, 0, TAU); ctx.fill();
+        for (let k = 0; k < 6; k++) {
+          const aw = w * (0.92 - k * 0.14), top = h * (0.3 + k * 0.06);
+          ctx.beginPath(); ctx.moveTo(w / 2 - aw / 2, h); ctx.lineTo(w / 2 - aw / 2, top + aw / 2);
+          ctx.arc(w / 2, top + aw / 2, aw / 2, Math.PI, 0); ctx.lineTo(w / 2 + aw / 2, h); ctx.closePath();
+          ctx.fillStyle = col(k * 12 - 30, 48, 74 - k * 7, 0.92); ctx.fill();
+        }
+      },
+      function gingham(ctx, w, h, rnd, col) {
+        const s = 46 + Math.floor(rnd() * 20);
+        ctx.fillStyle = col(0, 55, 60, 0.28);
+        for (let x = 0; x < w; x += s * 2) ctx.fillRect(x, 0, s, h);
+        for (let y = 0; y < h; y += s * 2) ctx.fillRect(0, y, w, s);
+      },
+      function terrazzo(ctx, w, h, rnd, col) {
+        for (let i = 0; i < 90; i++) {
+          ctx.save(); ctx.translate(rnd() * w, rnd() * h); ctx.rotate(rnd() * TAU);
+          ctx.fillStyle = col(rnd() * 140 - 70, 55, 45 + rnd() * 35, 0.75);
+          ctx.beginPath(); const r = 6 + rnd() * 18;
+          for (let k = 0; k < 5; k++) { const a = k / 5 * TAU; const rr = r * (0.6 + rnd() * 0.5); ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+          ctx.closePath(); ctx.fill(); ctx.restore();
+        }
+      },
+    ];
+
+    function drawSeal(ctx, x, y, r) {
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 16; ctx.shadowOffsetY = 5;
+      ctx.beginPath();
+      for (let k = 0; k <= 36; k++) { const a = k / 36 * TAU; const rr = r * (1 + Math.sin(a * 7) * 0.035 + Math.sin(a * 3 + 1) * 0.03); ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+      const g = ctx.createRadialGradient(x - r * 0.35, y - r * 0.4, 2, x, y, r);
+      g.addColorStop(0, '#b4404a'); g.addColorStop(1, '#5e141a');
+      ctx.fillStyle = g; ctx.fill();
+      ctx.shadowColor = 'transparent';
+      ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, r * 0.72, 0, TAU); ctx.stroke();
+      ctx.fillStyle = '#ecd29c';
+      ctx.beginPath(); ctx.arc(x, y - r * 0.14, r * 0.17, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x - r * 0.08, y - r * 0.08); ctx.lineTo(x + r * 0.08, y - r * 0.08); ctx.lineTo(x + r * 0.13, y + r * 0.32); ctx.lineTo(x - r * 0.13, y + r * 0.32); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+
+    function drawArt(f) {
+      const p = f.p, c = f.artTex.userData.canvas, ctx = c.getContext('2d'), w = c.width, h = c.height;
+      const rnd = mulberry(MC.hash(p.name + '#art'));
+      const hsl = {}; new THREE.Color(p.color).getHSL(hsl);
+      const col = (dh, s, l, a = 1) => `hsla(${(((hsl.h * 360 + dh) % 360) + 360) % 360},${s}%,${l}%,${a})`;
+      ctx.save(); ctx.clearRect(0, 0, w, h);
+      if (p.unlocked && f.coverImg) {
+        const img = f.coverImg, s = Math.max(w / img.width, h / img.height);
+        ctx.drawImage(img, (w - img.width * s) / 2, (h - img.height * s) / 2, img.width * s, img.height * s);
+        const v = ctx.createRadialGradient(w / 2, h / 2, h * 0.3, w / 2, h / 2, h * 0.75);
+        v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(20,10,5,.35)');
+        ctx.fillStyle = v; ctx.fillRect(0, 0, w, h);
+      } else {
+        const g = ctx.createLinearGradient(0, 0, w, h);
+        g.addColorStop(0, col(-12, 48, 84)); g.addColorStop(1, col(16, 42, 62));
+        ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+        PATTERNS[MC.hash(p.name) % PATTERNS.length](ctx, w, h, rnd, col);
+        for (let i = 0; i < 2600; i++) { ctx.fillStyle = `rgba(${rnd() < .5 ? '0,0,0' : '255,255,255'},${rnd() * 0.07})`; ctx.fillRect(rnd() * w, rnd() * h, 1.5, 1.5); }
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 24; ctx.shadowOffsetY = 10;
+        if (p.icon) {
+          ctx.fillStyle = col(0, 45, 28); // warna cadangan kalau emoji tampil hitam-putih
+          ctx.font = `${Math.round(w * 0.36)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+          ctx.fillText(p.icon, w / 2, h * 0.44);
+        } else {
+          ctx.fillStyle = 'rgba(255,255,255,.92)';
+          ctx.font = `italic 500 ${Math.round(w * 0.42)}px "Cormorant Garamond", serif`;
+          ctx.fillText(p.name.split(/\s+/).map((s) => s[0]).slice(0, 2).join('').toUpperCase(), w / 2, h * 0.44);
+        }
+        ctx.shadowColor = 'transparent';
+      }
+      if (!p.unlocked) {
+        ctx.fillStyle = 'rgba(30,20,14,.22)'; ctx.fillRect(0, 0, w, h);
+        drawSeal(ctx, w / 2, h * 0.8, 58);
+      } else {
+        ctx.fillStyle = 'rgba(236,210,156,.95)';
+        ctx.beginPath(); ctx.arc(w - 58, 58, 30, 0, TAU); ctx.fill();
+        ctx.fillStyle = '#3a2a18'; ctx.font = '600 32px "DM Sans", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('✓', w - 58, 60);
+      }
+      ctx.restore();
+      f.artTex.needsUpdate = true;
+    }
+
+    function drawPlaque(f) {
+      const p = f.p, c = f.plaqueTex.userData.canvas, ctx = c.getContext('2d'), w = c.width, h = c.height;
+      const g = ctx.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, '#a8854e'); g.addColorStop(0.45, '#e9d3a2'); g.addColorStop(0.55, '#dcc08a'); g.addColorStop(1, '#94723f');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = 'rgba(70,45,20,.55)'; ctx.lineWidth = 3; ctx.strokeRect(10, 10, w - 20, h - 20);
+      ctx.fillStyle = '#2a1d10'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '600 20px "DM Sans", sans-serif';
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '6px';
+      ctx.fillText(`NO. ${no2(f.i)}`, w / 2, 42);
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
+      fitFont(ctx, p.name, w - 60, 60, (s) => `italic 600 ${s}px "Cormorant Garamond", Georgia, serif`);
+      ctx.fillText(p.name, w / 2, 98);
+      ctx.font = 'italic 400 24px "Cormorant Garamond", Georgia, serif'; ctx.fillStyle = '#4a3520';
+      ctx.fillText(p.unlocked ? '✦ sudah terbuka ✦' : 'tebak passwordnya untuk membuka', w / 2, 150);
+      f.plaqueTex.needsUpdate = true;
+    }
+
+    function ringPieces(iw, ih, t, d, z) {
+      const top = new THREE.BoxGeometry(iw + 2 * t, t, d); top.translate(0, ih / 2 + t / 2, z);
+      const bot = new THREE.BoxGeometry(iw + 2 * t, t, d); bot.translate(0, -(ih / 2 + t / 2), z);
+      const l = new THREE.BoxGeometry(t, ih, d); l.translate(-(iw / 2 + t / 2), 0, z);
+      const r = new THREE.BoxGeometry(t, ih, d); r.translate(iw / 2 + t / 2, 0, z);
+      return [top, bot, l, r];
+    }
+
+    function buildScene() {
+      N = PEOPLE.length; SLOTS = Math.ceil(N / 2);
+      LAST_Z = FIRST_Z - (SLOTS - 1) * SPACING;
+      END_Z = LAST_Z - 7.5; Z_MIN = END_Z + 4.5;
+      LEN = ENTRANCE_Z - END_Z; MID = (ENTRANCE_Z + END_Z) / 2;
+
+      renderer = new THREE.WebGLRenderer({ canvas: $('#scene'), antialias: true, powerPreference: 'high-performance' });
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 1.75));
+      renderer.setSize(innerWidth, innerHeight);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.1;
+
+      scene = new THREE.Scene();
+      const BG = new THREE.Color('#120e0b');
+      scene.background = BG;
+      scene.fog = new THREE.Fog(BG, 12, 46);
+      const pmrem = new THREE.PMREMGenerator(renderer);
+      scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+      scene.environmentIntensity = 0.5;
+
+      camera = new THREE.PerspectiveCamera(IS_TOUCH ? 68 : 58, innerWidth / innerHeight, 0.1, 140);
+      camera.rotation.order = 'YXZ';
+      camera.position.set(0, EYE, START_Z);
+
+      // ----- cahaya -----
+      scene.add(new THREE.HemisphereLight(0xffe7c8, 0x1c130d, 1.1));
+      for (let z = ENTRANCE_Z - 3; z > END_Z; z -= 11) {
+        const l = new THREE.PointLight(0xffd29a, 32, 22, 1.6); l.position.set(0, H - 1.0, z); scene.add(l);
+      }
+
+      // ----- lantai, karpet, dinding, plafon -----
+      const floorTex = canvasTex(1024, 1024, paintPlanks, { repeat: [(2 * W) / 2.4, LEN / 4.8] });
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(2 * W, LEN), new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.3, metalness: 0.05 }));
+      floor.rotation.x = -Math.PI / 2; floor.position.set(0, 0, MID); scene.add(floor);
+
+      const carpetTex = canvasTex(256, 1024, paintCarpet, { repeat: [1, (LEN - 3) / 5] });
+      const carpet = new THREE.Mesh(new THREE.PlaneGeometry(2.1, LEN - 3), new THREE.MeshStandardMaterial({ map: carpetTex, roughness: 1 }));
+      carpet.rotation.x = -Math.PI / 2; carpet.position.set(0, 0.006, MID - 0.5); scene.add(carpet);
+
+      const wallTex = canvasTex(512, 512, paintWall, { repeat: [LEN / 3.2, H / 3.2] });
+      const wallMat = new THREE.MeshStandardMaterial({ map: wallTex, roughness: 0.95 });
+      const wainTex = canvasTex(1024, 340, paintWainscot, { repeat: [LEN / 2.4, 1] });
+      const wainMat = new THREE.MeshStandardMaterial({ map: wainTex, roughness: 0.8 });
+      const brass = new THREE.MeshStandardMaterial({ color: '#c49a55', metalness: 0.9, roughness: 0.3 });
+      const darkWood = new THREE.MeshStandardMaterial({ color: '#1a120d', roughness: 0.7 });
+      for (const side of [-1, 1]) {
+        const ry = side === -1 ? Math.PI / 2 : -Math.PI / 2;
+        const wall = new THREE.Mesh(new THREE.PlaneGeometry(LEN, H), wallMat);
+        wall.rotation.y = ry; wall.position.set(side * W, H / 2, MID); scene.add(wall);
+        const wain = new THREE.Mesh(new THREE.PlaneGeometry(LEN, 0.85), wainMat);
+        wain.rotation.y = ry; wain.position.set(side * (W - 0.02), 0.425, MID); scene.add(wain);
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.05, LEN), brass);
+        rail.position.set(side * (W - 0.03), 0.86, MID); scene.add(rail);
+        const base = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.14, LEN), darkWood);
+        base.position.set(side * (W - 0.03), 0.07, MID); scene.add(base);
+        const crown = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.22, LEN), darkWood);
+        crown.position.set(side * (W - 0.08), H - 0.11, MID); scene.add(crown);
+        const track = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.04, LEN), new THREE.MeshStandardMaterial({ color: '#0d0a08', roughness: 0.5 }));
+        track.position.set(side * (W - 1.5), H - 0.06, MID); scene.add(track);
+      }
+      const ceil = new THREE.Mesh(new THREE.PlaneGeometry(2 * W, LEN), new THREE.MeshStandardMaterial({ color: '#16110d', roughness: 1 }));
+      ceil.rotation.x = Math.PI / 2; ceil.position.set(0, H, MID); scene.add(ceil);
+      const sky = new THREE.Mesh(new THREE.PlaneGeometry(1.1, LEN - 2), new THREE.MeshBasicMaterial({ color: '#6b5640' }));
+      sky.rotation.x = Math.PI / 2; sky.position.set(0, H - 0.01, MID); scene.add(sky);
+      // balok plafon
+      const beamGeo = new THREE.BoxGeometry(2 * W, 0.26, 0.32);
+      const beamCount = Math.floor(LEN / SPACING);
+      const beams = new THREE.InstancedMesh(beamGeo, darkWood, beamCount);
+      const dummy = new THREE.Object3D();
+      for (let k = 0; k < beamCount; k++) { dummy.position.set(0, H - 0.13, FIRST_Z + SPACING / 2 - k * SPACING + SPACING); dummy.rotation.set(0, 0, 0); dummy.updateMatrix(); beams.setMatrixAt(k, dummy.matrix); }
+      scene.add(beams);
+
+      // ----- dinding ujung & pintu masuk -----
+      const endWallTex = wallTex.clone(); endWallTex.repeat.set((2 * W) / 3.2, H / 3.2); endWallTex.needsUpdate = true;
+      const endWallMat = new THREE.MeshStandardMaterial({ map: endWallTex, roughness: 0.95 });
+      const endWall = new THREE.Mesh(new THREE.PlaneGeometry(2 * W, H), endWallMat);
+      endWall.position.set(0, H / 2, END_Z); scene.add(endWall);
+      const entWall = new THREE.Mesh(new THREE.PlaneGeometry(2 * W, H), endWallMat);
+      entWall.rotation.y = Math.PI; entWall.position.set(0, H / 2, ENTRANCE_Z); scene.add(entWall);
+
+      const goldMat = new THREE.MeshStandardMaterial({ color: '#d1a75a', metalness: 1, roughness: 0.28, envMapIntensity: 1.6 });
+      function bigPanel(z, rotY, info) {
+        const PW = 4.6, PH = 2.85;
+        const g = new THREE.Group(); g.position.set(0, 2.75, z); g.rotation.y = rotY;
+        const tex = canvasTex(1400, Math.round(1400 * PH / PW), (ctx, w, h) => paintPanel(ctx, w, h, info));
+        const m = new THREE.Mesh(new THREE.PlaneGeometry(PW, PH), new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: 0.55, roughness: 0.9 }));
+        m.position.z = 0.04; g.add(m);
+        g.add(new THREE.Mesh(mergeGeometries(ringPieces(PW, PH, 0.14, 0.1, 0.05)), goldMat));
+        const glow = new THREE.Mesh(new THREE.PlaneGeometry(PW * 2, PH * 2.2), new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false }));
+        glow.position.set(0, 0.3, 0.01); g.add(glow);
+        scene.add(g);
+      }
+      const glowTex = canvasTex(256, 384, paintGlow);
+      bigPanel(END_Z + 0.02, 0, { kicker: 'Akhir Pameran', title: 'Terima kasih', body: CONFIG.closingText || 'Terima kasih sudah jadi bagian dari cerita ini.', sign: CONFIG.from ? `— ${CONFIG.from}` : '' });
+      bigPanel(ENTRANCE_Z - 0.02, Math.PI, { kicker: 'Selamat datang di', title: CONFIG.title || 'Moment to Shared', body: CONFIG.subtitle || '', sign: '' });
+
+      // ----- bingkai (shared geometry) -----
+      const frameGeo = mergeGeometries([
+        ...ringPieces(IN_W, IN_H, MOULD, 0.09, 0.045),
+        ...ringPieces(IN_W + 2 * MOULD, IN_H + 2 * MOULD, 0.035, 0.13, 0.065),
+        ...ringPieces(IN_W - 0.05, IN_H - 0.05, 0.025, 0.1, 0.05),
+      ]);
+      const matGeo = new THREE.PlaneGeometry(IN_W, IN_H);
+      const matMat = new THREE.MeshStandardMaterial({ color: '#efe6d6', roughness: 0.9, emissive: '#2a2218' });
+      const artGeo = new THREE.PlaneGeometry(ART_W, ART_H);
+      const plaqueGeo = new THREE.PlaneGeometry(1.0, 0.31);
+      const plaqueBackGeo = new THREE.BoxGeometry(1.05, 0.36, 0.03);
+      const washGeo = new THREE.PlaneGeometry(3.4, 5.0);
+      const shadowTex = canvasTex(256, 320, paintShadow);
+      const shadowGeo = new THREE.PlaneGeometry(OUT_W + 0.36, OUT_H + 0.36);
+      const shadowMat = new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, opacity: 0.55, depthWrite: false });
+
+      const fixtureGeo = new THREE.CylinderGeometry(0.07, 0.09, 0.28, 16, 1, true); fixtureGeo.rotateX(Math.PI / 2);
+      const fixtures = new THREE.InstancedMesh(fixtureGeo, new THREE.MeshStandardMaterial({ color: '#111', metalness: 0.6, roughness: 0.4, side: THREE.DoubleSide }), N);
+      const lensGeo = new THREE.CircleGeometry(0.068, 16);
+      const lenses = new THREE.InstancedMesh(lensGeo, new THREE.MeshBasicMaterial({ color: '#fff1d6' }), N);
+      const poolTex = canvasTex(256, 256, paintPool);
+      const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(2.4, 2.0), new THREE.MeshBasicMaterial({ map: poolTex, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }), N);
+
+      PEOPLE.forEach((p, i) => {
+        const side = i % 2 === 0 ? -1 : 1;
+        const z = FIRST_Z - Math.floor(i / 2) * SPACING;
+        const g = new THREE.Group();
+        g.position.set(side * (W - 0.06), 0, z);
+        g.rotation.y = side === -1 ? Math.PI / 2 : -Math.PI / 2;
+
+        const wash = new THREE.Mesh(washGeo, new THREE.MeshBasicMaterial({ map: glowTex, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }));
+        wash.position.set(0, FRAME_Y + 0.25, -0.05); wash.renderOrder = 1; g.add(wash);
+        const shadow = new THREE.Mesh(shadowGeo, shadowMat);
+        shadow.position.set(0.04, FRAME_Y - 0.09, -0.045); shadow.renderOrder = 2; g.add(shadow);
+
+        const frame = new THREE.Mesh(frameGeo, goldMat); frame.position.y = FRAME_Y; g.add(frame);
+        const matte = new THREE.Mesh(matGeo, matMat); matte.position.set(0, FRAME_Y, 0.03); g.add(matte);
+
+        const artTex = canvasTex(600, 780, () => { });
+        const artMat = new THREE.MeshStandardMaterial({ map: artTex, emissiveMap: artTex, emissive: 0xffffff, emissiveIntensity: 0.42, roughness: 0.75 });
+        const art = new THREE.Mesh(artGeo, artMat); art.position.set(0, FRAME_Y, 0.036); g.add(art);
+
+        const plaqueY = FRAME_Y - OUT_H / 2 - 0.3;
+        const pb = new THREE.Mesh(plaqueBackGeo, darkWood); pb.position.set(0, plaqueY, -0.045); g.add(pb);
+        const plaqueTex = canvasTex(640, 200, () => { });
+        const plaque = new THREE.Mesh(plaqueGeo, new THREE.MeshStandardMaterial({ map: plaqueTex, emissiveMap: plaqueTex, emissive: 0xffffff, emissiveIntensity: 0.32, metalness: 0.35, roughness: 0.4 }));
+        plaque.position.set(0, plaqueY, -0.028); g.add(plaque);
+
+        scene.add(g);
+        const f = { p, i, side, z, group: g, wash, art, artMat, artTex, plaqueTex, hover: 0, coverImg: null };
+        frames.push(f);
+        drawArt(f); drawPlaque(f);
+        [art, frame, plaque, matte].forEach((m) => { m.userData.idx = i; pickables.push(m); });
+
+        // lampu sorot di plafon
+        const fx = side * (W - 1.5), fy = H - 0.2;
+        dummy.position.set(fx, fy, z); dummy.lookAt(side * W, FRAME_Y + 0.4, z); dummy.updateMatrix();
+        fixtures.setMatrixAt(i, dummy.matrix);
+        dummy.translateZ(0.141); dummy.updateMatrix(); lenses.setMatrixAt(i, dummy.matrix);
+        dummy.position.set(side * (W - 1.0), 0.012, z); dummy.rotation.set(-Math.PI / 2, 0, 0); dummy.updateMatrix();
+        pools.setMatrixAt(i, dummy.matrix);
+      });
+      scene.add(fixtures, lenses, pools);
+
+      // ----- tiang pembatas + tali beludru -----
+      const postGeo = mergeGeometries([
+        new THREE.CylinderGeometry(0.028, 0.028, 0.88, 12).translate(0, 0.46, 0),
+        new THREE.SphereGeometry(0.055, 16, 12).translate(0, 0.94, 0),
+        new THREE.CylinderGeometry(0.13, 0.16, 0.04, 20).translate(0, 0.02, 0),
+      ]);
+      const postZs = [];
+      for (let k = 0; k <= SLOTS; k++) postZs.push(FIRST_Z + SPACING / 2 - k * SPACING);
+      const posts = new THREE.InstancedMesh(postGeo, brass, postZs.length * 2);
+      const ropeGeos = [];
+      let pi = 0;
+      for (const side of [-1, 1]) {
+        const x = side * (W - 1.05);
+        postZs.forEach((pz, k) => {
+          dummy.position.set(x, 0, pz); dummy.rotation.set(0, 0, 0); dummy.updateMatrix(); posts.setMatrixAt(pi++, dummy.matrix);
+          if (k > 0) {
+            const a = new THREE.Vector3(x, 0.86, postZs[k - 1]), b = new THREE.Vector3(x, 0.86, pz);
+            const m = a.clone().lerp(b, 0.5); m.y -= 0.2;
+            ropeGeos.push(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(a, m, b), 20, 0.022, 8, false));
+          }
+        });
+      }
+      scene.add(posts);
+      scene.add(new THREE.Mesh(mergeGeometries(ropeGeos), new THREE.MeshStandardMaterial({ color: '#6e1520', roughness: 0.6 })));
+
+      // ----- debu melayang di cahaya -----
+      const DN = IS_TOUCH ? 350 : 700;
+      const pos = new Float32Array(DN * 3); dustBase = new Float32Array(DN * 3); dustPhase = new Float32Array(DN);
+      const rnd = mulberry(99);
+      for (let k = 0; k < DN; k++) {
+        dustBase[k * 3] = (rnd() * 2 - 1) * (W - 0.4); dustBase[k * 3 + 1] = 0.3 + rnd() * (H - 0.8); dustBase[k * 3 + 2] = END_Z + rnd() * LEN;
+        dustPhase[k] = rnd() * TAU;
+      }
+      pos.set(dustBase);
+      const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      dust = new THREE.Points(dg, new THREE.PointsMaterial({ size: 0.035, map: canvasTex(64, 64, paintDot), color: '#ffdcae', transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending }));
+      scene.add(dust);
+
+      addEventListener('resize', () => {
+        renderer.setSize(innerWidth, innerHeight);
+        camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+      });
+    }
+
+    /* =====================================================
+       KONTROL KAMERA
+       ===================================================== */
+    const keys = new Set();
+    const mouse = { x: 0, y: 0, sx: 0, sy: 0, cx: 0, cy: 0 };
+    let dragging = false, dragMoved = 0, dragStart = 0, lastPX = 0, lastPY = 0, needPick = false, hoverIdx = -1, entered = false;
+    const raycaster = new THREE.Raycaster();
+    const ndc = new THREE.Vector2();
+
+    const nearestAngle = (cur, t) => t + TAU * Math.round((cur - t) / TAU);
+    const uiOpen = () => $('#lockModal').classList.contains('open') || $('#diary').classList.contains('open') || $('#lightbox').classList.contains('open');
+
+    function unfocus() {
+      if (focusIdx < 0 && pendingOpen < 0) return;
+      focusIdx = -1; pendingOpen = -1;
+      target.x = 0; target.pitch = 0.02; target.yaw = nearestAngle(cam.yaw, 0);
+    }
+    function walk(d) {
+      if (!entered || uiOpen()) return;
+      unfocus();
+      const dir = Math.cos(target.yaw) >= 0 ? 1 : -1;
+      target.z = clamp(target.z - d * dir, Z_MIN, Z_MAX);
+      dimHint();
+    }
+    function focusOn(i) {
+      const f = frames[i]; if (!f) return;
+      closeDirectory();
+      focusIdx = i;
+      target.x = f.side * (W - VIEW_DIST - 0.06);
+      target.z = f.z;
+      target.yaw = nearestAngle(cam.yaw, f.side === -1 ? Math.PI / 2 : -Math.PI / 2);
+      target.pitch = Math.atan2(FRAME_Y - 0.4 - EYE, VIEW_DIST);
+      pendingOpen = i;
+      const dist = Math.abs(cam.z - f.z);
+      pendingDeadline = performance.now() + 700 + Math.min(2200, dist * 90);
+      tooltip(-1);
+    }
+    function pickAt(cx, cy) {
+      ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1);
+      raycaster.setFromCamera(ndc, camera);
+      const hit = raycaster.intersectObjects(pickables, false)[0];
+      return hit && hit.distance < 18 ? hit.object.userData.idx : -1;
+    }
+    function tooltip(idx) {
+      const t = $('#tooltip');
+      if (idx < 0 || IS_TOUCH) { t.classList.remove('show'); $('#scene').classList.remove('hovering'); return; }
+      const p = PEOPLE[idx];
+      t.innerHTML = `<b>${esc(p.icon)} ${esc(p.name)}</b><span>${p.unlocked ? 'klik untuk membaca diary' : 'klik untuk menebak password'}</span>`;
+      t.style.transform = `translate(${mouse.cx + 16}px, ${mouse.cy + 16}px)`;
+      t.classList.add('show'); $('#scene').classList.add('hovering');
+    }
+
+    function initControls() {
+      const cv = $('#scene');
+      cv.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const unit = e.deltaMode === 1 ? 16 : 1;
+        walk(clamp(e.deltaY * unit, -120, 120) * 0.012);
+      }, { passive: false });
+      cv.addEventListener('pointerdown', (e) => {
+        if (!entered) return;
+        dragging = true; dragMoved = 0; dragStart = performance.now(); lastPX = e.clientX; lastPY = e.clientY;
+        cv.setPointerCapture(e.pointerId); cv.classList.add('dragging');
+      });
+      cv.addEventListener('pointermove', (e) => {
+        mouse.cx = e.clientX; mouse.cy = e.clientY;
+        mouse.x = (e.clientX / innerWidth) * 2 - 1; mouse.y = (e.clientY / innerHeight) * 2 - 1;
+        if (dragging) {
+          const dx = e.clientX - lastPX, dy = e.clientY - lastPY;
+          lastPX = e.clientX; lastPY = e.clientY; dragMoved += Math.abs(dx) + Math.abs(dy);
+          if (dragMoved > 6) {
+            if (Math.abs(dx) > 0.5) { if (focusIdx >= 0) { focusIdx = -1; pendingOpen = -1; target.x = 0; target.pitch = 0.02; } target.yaw += dx * 0.0045; }
+            if (Math.abs(dy) > 0.5) walk(-dy * 0.03);
+            tooltip(-1);
+          }
+        } else if (!IS_TOUCH) needPick = true;
+      });
+      const end = (e) => {
+        if (!dragging) return;
+        dragging = false; cv.classList.remove('dragging');
+        if (dragMoved <= 8 && performance.now() - dragStart < 600) {
+          const idx = pickAt(e.clientX, e.clientY);
+          if (idx >= 0) focusOn(idx);
+        }
+      };
+      cv.addEventListener('pointerup', end);
+      cv.addEventListener('pointercancel', () => { dragging = false; cv.classList.remove('dragging'); });
+      cv.addEventListener('pointerleave', () => { if (!dragging) { hoverIdx = -1; tooltip(-1); } });
+
+      const map = { w: 'f', arrowup: 'f', s: 'b', arrowdown: 'b', a: 'l', arrowleft: 'l', d: 'r', arrowright: 'r', shift: 'shift' };
+      addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { closeTop(); return; }
+        if (e.target.tagName === 'INPUT' || uiOpen() || !entered) return;
+        const k = map[e.key.toLowerCase()];
+        if (k) { keys.add(k); if (k !== 'shift') e.preventDefault(); }
+      });
+      addEventListener('keyup', (e) => { const k = map[e.key.toLowerCase()]; if (k) keys.delete(k); });
+      addEventListener('blur', () => keys.clear());
+    }
+
+    /* =====================================================
+       LOOP
+       ===================================================== */
+    let last = performance.now(), walkPhase = 0, hintTimer = 0;
+    function animate(now) {
+      requestAnimationFrame(animate);
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      if ($('#diary').classList.contains('open') && !diaryClosing) return; // hemat GPU saat diary terbuka
+
+      if (!uiOpen() && entered) {
+        let mv = 0, turn = 0;
+        if (keys.has('f')) mv += 1; if (keys.has('b')) mv -= 1;
+        if (keys.has('l')) turn += 1; if (keys.has('r')) turn -= 1;
+        if (mv) walk(mv * (keys.has('shift') ? 10 : 5) * dt);
+        if (turn) { if (focusIdx >= 0) { focusIdx = -1; pendingOpen = -1; target.x = 0; target.pitch = 0.02; } target.yaw += turn * 1.7 * dt; }
+      }
+      if (!entered) target.yaw = Math.sin(now * 0.00025) * 0.05;
+
+      const kp = 1 - Math.exp(-dt * 3.0), ky = 1 - Math.exp(-dt * 4.5);
+      const pz = cam.z;
+      cam.x += (target.x - cam.x) * kp; cam.z += (target.z - cam.z) * kp;
+      cam.yaw += (target.yaw - cam.yaw) * ky; cam.pitch += (target.pitch - cam.pitch) * ky;
+      const speed = Math.abs(cam.z - pz) / Math.max(dt, 1e-4);
+      walkPhase += speed * dt * 2.4;
+      const bob = Math.sin(walkPhase) * 0.02 * Math.min(1, speed / 2);
+
+      const par = (focusIdx < 0 && !dragging && !IS_TOUCH) ? 1 : 0.25;
+      mouse.sx += (mouse.x * par - mouse.sx) * Math.min(1, dt * 3);
+      mouse.sy += (mouse.y * par - mouse.sy) * Math.min(1, dt * 3);
+      camera.position.set(cam.x, EYE + bob, cam.z);
+      camera.rotation.set(cam.pitch - mouse.sy * 0.045, cam.yaw - mouse.sx * 0.09, 0);
+
+      if (pendingOpen >= 0) {
+        const close = Math.abs(target.z - cam.z) < 0.05 && Math.abs(target.x - cam.x) < 0.05 && Math.abs(target.yaw - cam.yaw) < 0.03;
+        if (close || now > pendingDeadline) { const i = pendingOpen; pendingOpen = -1; openPerson(i); }
+      }
+
+      if (needPick && !uiOpen()) {
+        needPick = false;
+        const idx = pickAt(mouse.cx, mouse.cy);
+        if (idx !== hoverIdx) hoverIdx = idx;
+        tooltip(hoverIdx);
+      }
+
+      for (const f of frames) {
+        const h = (f.i === hoverIdx || f.i === focusIdx) ? 1 : 0;
+        if (Math.abs(h - f.hover) > 0.001) {
+          f.hover += (h - f.hover) * Math.min(1, dt * 6);
+          f.wash.material.opacity = 0.45 + f.hover * 0.4;
+          f.artMat.emissiveIntensity = 0.42 + f.hover * 0.22;
+        }
+      }
+
+      const pa = dust.geometry.attributes.position, arr = pa.array, t = now * 0.001;
+      for (let k = 0; k < dustPhase.length; k++) {
+        const ph = dustPhase[k];
+        arr[k * 3] = dustBase[k * 3] + Math.sin(t * 0.3 + ph) * 0.25;
+        arr[k * 3 + 1] = dustBase[k * 3 + 1] + Math.sin(t * 0.21 + ph * 2) * 0.35;
+        arr[k * 3 + 2] = dustBase[k * 3 + 2] + Math.cos(t * 0.17 + ph) * 0.25;
+      }
+      pa.needsUpdate = true;
+
+      const frac = clamp((Z_MAX - cam.z) / (Z_MAX - Z_MIN), 0, 1);
+      $('#railMarker').style.top = (frac * 100) + '%';
+
+      renderer.render(scene, camera);
+    }
+
+    /* =====================================================
+       UI: daftar nama, rail, counter
+       ===================================================== */
+    function tint(hex, a) { const c = new THREE.Color(hex); return `rgba(${Math.round(c.r * 255)},${Math.round(c.g * 255)},${Math.round(c.b * 255)},${a})`; }
+    function buildUI() {
+      $('#totalCount').textContent = N;
+      const list = $('#dirList');
+      list.innerHTML = PEOPLE.map((p, i) => `
+        <li class="dir-item" data-i="${i}">
+          <button type="button">
+            <span class="dir-no">${no2(i)}</span>
+            <span class="dir-icon" style="background:${tint(p.color, .28)}">${esc(p.icon || '✦')}</span>
+            <span class="dir-name">${esc(p.name)}</span>
+            <span class="dir-status">🔒</span>
+          </button>
+        </li>`).join('') + '<li class="dir-empty" hidden>Nama tidak ditemukan 🥲</li>';
+      list.addEventListener('click', (e) => {
+        const li = e.target.closest('.dir-item'); if (!li) return;
+        focusOn(+li.dataset.i);
+      });
+      $('#dirSearch').addEventListener('input', (e) => {
+        const q = MC.normalize(e.target.value);
+        let shown = 0;
+        list.querySelectorAll('.dir-item').forEach((li) => {
+          const p = PEOPLE[+li.dataset.i];
+          const hit = !q || MC.normalize(`${p.name} ${p.nickname || ''} ${no2(p.index)}`).includes(q);
+          li.hidden = !hit; if (hit) shown++;
+        });
+        list.querySelector('.dir-empty').hidden = shown > 0;
+      });
+      $('#dirBtn').addEventListener('click', () => $('#directory').classList.contains('open') ? closeDirectory() : openDirectory());
+      $('#dirClose').addEventListener('click', closeDirectory);
+
+      const rail = $('#rail');
+      frames.forEach((f) => {
+        const b = document.createElement('button');
+        b.className = 'rail-dot'; b.title = `${no2(f.i)} · ${f.p.name}`;
+        b.style.top = (clamp((Z_MAX - f.z) / (Z_MAX - Z_MIN), 0, 1) * 100) + '%';
+        b.style.left = (f.side < 0 ? 30 : 70) + '%';
+        b.addEventListener('click', () => focusOn(f.i));
+        rail.appendChild(b); f.dot = b;
+      });
+
+      $('#muteBtn').addEventListener('click', () => setMuted(!AudioState.muted));
+      $('#muteBtn').textContent = AudioState.muted ? '🔇' : '🔊';
+      $('#hint').textContent = IS_TOUCH
+        ? 'Geser ↑ untuk jalan · ketuk lukisan'
+        : 'Scroll / W S untuk berjalan · drag atau A D untuk menoleh · klik lukisan untuk membuka';
+      $('#fbTip').textContent = IS_TOUCH ? 'Geser halaman ke kiri / kanan untuk membalik' : 'Klik atau tarik ujung halaman · tombol ← → di keyboard';
+      $('#previewBadge').addEventListener('click', () => toast('Ini mode preview: data dibaca langsung dari <b>rahasia/friends.js</b>. Sebelum online, jalankan <b>rahasia/build.html</b> supaya password terenkripsi.', 6000));
+      updateCounter();
+    }
+    function openDirectory() { $('#directory').classList.add('open'); setTimeout(() => !IS_TOUCH && $('#dirSearch').focus(), 350); }
+    function closeDirectory() { $('#directory').classList.remove('open'); }
+    function updateCounter() { $('#openCount').textContent = PEOPLE.filter((p) => p.unlocked).length; }
+    function dimHint() { clearTimeout(hintTimer); hintTimer = setTimeout(() => $('#hint').classList.add('dim'), 6000); }
+
+    function markUnlocked(p, data) {
+      p.unlocked = true; p.data = data;
+      const f = frames[p.index];
+      drawArt(f); drawPlaque(f);
+      if (!IS_FILE && data.cover) {
+        const img = new Image();
+        img.onload = () => { f.coverImg = img; drawArt(f); };
+        img.src = data.cover;
+      }
+      f.dot?.classList.add('open');
+      const li = $(`#dirList .dir-item[data-i="${p.index}"] .dir-status`); if (li) li.textContent = '🔓';
+      updateCounter();
+    }
+    function markLocked(p) {
+      p.unlocked = false; p.data = null;
+      const f = frames[p.index]; f.coverImg = null; drawArt(f); drawPlaque(f);
+      f.dot?.classList.remove('open');
+      const li = $(`#dirList .dir-item[data-i="${p.index}"] .dir-status`); if (li) li.textContent = '🔒';
+      store.del('mk:' + p.id); updateCounter();
+    }
+    async function restoreUnlocks() {
+      for (const p of PEOPLE) {
+        const ans = store.get('mk:' + p.id);
+        if (!ans) continue;
+        const data = await unlockWith(p, ans);
+        if (data) markUnlocked(p, data); else store.del('mk:' + p.id);
+      }
+    }
+
+    /* =====================================================
+       MODAL PASSWORD
+       ===================================================== */
+    let lockP = null, attempts = 0;
+    const WRONG = ['Hmm, bukan itu 🤔', 'Salah, coba ingat-ingat lagi 😗', 'Kuncinya nggak mau muter 🔐', 'Bukan itu bestie 😭', 'Hampir… mungkin? 👀', 'Coba lagi, kamu pasti tahu!', 'Nope 🙅 tapi semangat!'];
+    function openPerson(i) {
+      const p = PEOPLE[i];
+      if (p.unlocked && p.data) openDiary(p); else openLock(p);
+    }
+    function openLock(p) {
+      lockP = p; attempts = 0;
+      const card = $('#lockCard'); card.style.setProperty('--c', p.color);
+      $('#lockIcon').textContent = p.icon || '✦';
+      $('#lockNo').textContent = `Arsip No. ${no2(p.index)}`;
+      $('#lockName').textContent = p.name;
+      $('#lockHint span').textContent = p.hint || 'Tanya yang bikin museum ini 😉';
+      $('#lockHint2 span').textContent = p.hint2 || '';
+      $('#lockHint2').classList.remove('show');
+      $('#lockMsg').textContent = ''; $('#lockMsg').className = 'lock-msg';
+      $('#lockInput').value = '';
+      $('#lockBtn').disabled = false; $('#lockBtn').textContent = 'Buka';
+      $('#lockModal').classList.add('open'); $('#lockModal').setAttribute('aria-hidden', 'false');
+      tooltip(-1);
+      setTimeout(() => $('#lockInput').focus(), 320);
+    }
+    function closeLock() { $('#lockModal').classList.remove('open'); $('#lockModal').setAttribute('aria-hidden', 'true'); lockP = null; }
+
+    async function submitLock(e) {
+      e.preventDefault();
+      const p = lockP; if (!p) return;
+      const val = $('#lockInput').value;
+      const card = $('#lockCard');
+      if (!val.trim()) { card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake'); return; }
+      $('#lockBtn').disabled = true; $('#lockBtn').textContent = 'memutar kunci…';
+      const [data] = await Promise.all([unlockWith(p, val), sleep(450)]);
+      if (data) {
+        store.set('mk:' + p.id, val);
+        $('#lockMsg').textContent = 'Klik! Terbuka ✨'; $('#lockMsg').className = 'lock-msg ok';
+        markUnlocked(p, data);
+        confetti(p.color);
+        setTimeout(() => { closeLock(); openDiary(p); }, 650);
+      } else {
+        attempts++;
+        let msg = WRONG[(attempts - 1) % WRONG.length];
+        if (attempts >= 3 && p.hint2 && !$('#lockHint2').classList.contains('show')) { $('#lockHint2').classList.add('show'); msg += ' · ada petunjuk tambahan!'; }
+        if (attempts >= 6 && CONFIG.from) msg = `Masih salah 😭 Lupa? Tanya ${CONFIG.from} aja.`;
+        $('#lockMsg').textContent = msg; $('#lockMsg').className = 'lock-msg';
+        card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+        $('#lockBtn').disabled = false; $('#lockBtn').textContent = 'Buka';
+        $('#lockInput').select();
+      }
+    }
+
+    function confetti(color) {
+      const box = $('#confetti');
+      const cols = [color, '#e6cf9f', '#fbf6ec', '#c9a66b', color];
+      for (let k = 0; k < 70; k++) {
+        const i = document.createElement('i');
+        i.style.left = (Math.random() * 100) + 'vw';
+        i.style.background = cols[k % cols.length];
+        i.style.setProperty('--x', (Math.random() * 200 - 100) + 'px');
+        i.style.setProperty('--rot', (Math.random() * 900 - 450) + 'deg');
+        i.style.setProperty('--d', (1.8 + Math.random() * 1.6) + 's');
+        i.style.animationDelay = (Math.random() * 0.4) + 's';
+        box.appendChild(i);
+      }
+      setTimeout(() => (box.innerHTML = ''), 4200);
+    }
+
+    /* =====================================================
+       DIARY — buku yang bisa di-swipe (StPageFlip)
+       ===================================================== */
+    let diaryP = null, diaryClosing = false, lbList = [], lbIdx = 0, flip = null, fbSize = null, fbResizeT = 0;
+    const TAPES = ['rgba(232,190,170,.85)', 'rgba(190,214,200,.85)', 'rgba(214,200,236,.85)', 'rgba(242,214,150,.85)', 'rgba(190,206,232,.85)'];
+
+    // Ukuran 1 halaman: 2 halaman berdampingan di laptop, 1 halaman di HP.
+    function bookSize() {
+      const small = innerWidth < 760;
+      const availW = innerWidth - (small ? 24 : 140);
+      const availH = innerHeight - (small ? 150 : 210);
+      const R = 0.7;
+      let h = Math.min(780, availH), w = h * R, spread = true;
+      if (2 * w > availW) {
+        if (availW / 2 >= 300) { w = availW / 2; h = w / R; }
+        else { spread = false; w = Math.min(availW, h * R); h = Math.min(availH, w / R); w = Math.min(w, h * R); }
+      }
+      return { w: Math.floor(w), h: Math.floor(h), spread };
+    }
+
+    // Potong surat panjang jadi beberapa halaman sesuai tinggi halaman.
+    function paginateLetter(text) {
+      const probe = document.createElement('div');
+      probe.className = 'fb-page fb-probe';
+      probe.innerHTML = '<div class="pg"><h3 class="pg-head">Surat untukmu</h3><div class="pg-letter"></div></div>';
+      $('#diary').appendChild(probe);
+      const head = probe.querySelector('.pg-head'), box = probe.querySelector('.pg-letter');
+      const fits = () => box.scrollHeight <= box.clientHeight + 1;
+      const pages = []; let cur = [];
+      const flush = () => { pages.push(cur.join('')); cur = []; box.innerHTML = ''; head.style.display = 'none'; };
+      for (const para of String(text).replace(/\r/g, '').split('\n')) {
+        if (!para.trim() && !cur.length) continue;
+        let words = para.split(' ');
+        while (words.length) {
+          const p = document.createElement('p'); box.appendChild(p);
+          p.textContent = words.join(' ') || ' ';
+          if (fits()) { cur.push(p.outerHTML); break; }
+          let n = 0;
+          while (n < words.length) { p.textContent = words.slice(0, n + 1).join(' '); if (!fits()) break; n++; }
+          if (n === 0) {
+            if (!cur.length) { p.textContent = words[0]; cur.push(p.outerHTML); words = words.slice(1); }
+            else p.remove();
+            flush(); continue;
+          }
+          p.textContent = words.slice(0, n).join(' '); cur.push(p.outerHTML);
+          words = words.slice(n); flush();
+        }
+      }
+      if (cur.length) pages.push(cur.join(''));
+      probe.remove();
+      return pages;
+    }
+
+    function buildPages(p) {
+      const d = p.data || {};
+      const icon = esc(p.icon || '✦');
+      const inner = [];
+      lbList = [];
+
+      // halaman 1: ex libris
+      inner.push({ cls: 'fb-endpaper', html: `
+        <div class="pg pg-plate"><div class="plate">
+          <p class="plate-k">Ex Libris</p>
+          <div class="plate-icon">${icon}</div>
+          <h3 class="plate-name">${esc(p.name)}</h3>
+          ${d.title ? `<p class="plate-title">${esc(d.title)}</p>` : ''}
+          <p class="plate-from">${esc(CONFIG.title || '')} · No. ${no2(p.index)}</p>
+        </div></div>`, num: false });
+
+      // surat (bisa lebih dari 1 halaman)
+      if (d.letter) paginateLetter(d.letter).forEach((chunk, k) => inner.push({ html: `
+        <div class="pg">${k === 0 ? '<h3 class="pg-head">Surat untukmu</h3>' : ''}<div class="pg-letter">${chunk}</div></div>` }));
+
+      // 1 kenangan = 1 halaman
+      (Array.isArray(d.entries) ? d.entries : []).forEach((e, k) => {
+        const h = MC.hash(p.name + k);
+        const r = ((h % 50) - 25) / 10, tr = ((h >>> 8) % 12) - 6, tape = TAPES[(h >>> 4) % TAPES.length];
+        const meta = `${e.caption ? `<p class="p-cap">${esc(e.caption)}</p>` : ''}${e.date ? `<p class="p-date">${esc(e.date)}</p>` : ''}${e.text ? `<p class="p-text">${esc(e.text)}</p>` : ''}`;
+        const head = k === 0 ? '<h3 class="pg-head">Kenangan kita</h3>' : '';
+        if (e.photo) {
+          const li = lbList.push({ src: e.photo, cap: e.caption || '' }) - 1;
+          inner.push({ html: `<div class="pg pg-entry">${head}
+            <button type="button" class="pg-photo" data-lb="${li}" style="--r:${r}deg" aria-label="Perbesar foto">
+              <span class="tape" style="--tr:${tr}deg;--tape:${tape}"></span>
+              <span class="ph"><img src="${esc(e.photo)}" alt="" onerror="this.parentElement.classList.add('missing')"></span>
+            </button>
+            <div class="pg-meta">${meta}</div></div>` });
+        } else {
+          inner.push({ html: `<div class="pg pg-entry">${head}
+            <div class="pg-note" style="--r:${r}deg"><span class="tape" style="--tr:${tr}deg;--tape:${tape}"></span><div class="pg-meta">${meta}</div></div></div>` });
+        }
+      });
+
+      // penutup
+      const sign = d.signoff || (CONFIG.from ? `— dengan sayang, ${CONFIG.from}` : '— dengan sayang');
+      inner.push({ html: `
+        <div class="pg pg-end">
+          <div class="end-orn">✦</div>
+          <p class="end-sign">${esc(sign)}</p>
+          <p class="end-sub">Terima kasih sudah jadi bagian dari ${esc(CONFIG.title || 'cerita ini')}.</p>
+          <div class="end-actions">
+            <button type="button" class="btn-soft dark" data-act="back">← Kembali ke museum</button>
+            <button type="button" class="btn-soft" data-act="relock">🔒 Kunci lagi diary ini</button>
+          </div>
+        </div>` });
+
+      // jumlah halaman dalam harus genap supaya sampul belakang pas
+      if (fbSize.spread && inner.length % 2) inner.push({ html: '<div class="pg pg-blank"><p class="blank-note">halaman ini sengaja dikosongkan<br>untuk kenangan berikutnya ✦</p></div>' });
+
+      const out = [];
+      out.push(`<div class="fb-page fb-cover" data-density="hard"><div class="cv"><div class="cv-frame">
+          <div class="cv-emblem">${icon}</div>
+          <p class="cv-kicker">Diary of</p>
+          <h2 class="cv-name">${esc(p.nickname || p.name)}</h2>
+          <p class="cv-no">ARSIP NO. ${no2(p.index)}</p>
+          <p class="cv-tip">buka →</p>
+        </div></div></div>`);
+      let n = 0;
+      inner.forEach((pg) => {
+        n++; const num = pg.num === false ? '' : `<span class="pg-num">${n}</span>`;
+        out.push(`<div class="fb-page ${pg.cls || 'fb-paper'}">${pg.html}${num}</div>`);
+      });
+      out.push(`<div class="fb-page fb-back" data-density="hard"><div class="cv"><div class="cv-frame">
+          <div class="cv-emblem sm">✦</div>
+          <p class="cv-kicker">${esc(CONFIG.title || '')}</p>
+        </div></div></div>`);
+      return out;
+    }
+
+    // kecilkan teks kalau caption/cerita terlalu panjang untuk 1 halaman
+    function fitEntries(book) {
+      book.querySelectorAll('.pg-entry').forEach((pg) => {
+        const meta = pg.querySelector('.pg-meta');
+        let fs = 15;
+        while (pg.scrollHeight > pg.clientHeight + 1 && fs > 10) { fs -= 0.5; meta.style.fontSize = fs + 'px'; }
+      });
+    }
+
+    function buildBook(p, startPage = 0) {
+      if (flip) { try { flip.destroy(); } catch (e) { } flip = null; }
+      const dia = $('#diary'), stage = $('#fbStage');
+      fbSize = bookSize();
+      dia.style.setProperty('--pw', fbSize.w + 'px');
+      dia.style.setProperty('--ph', fbSize.h + 'px');
+      dia.classList.toggle('portrait', !fbSize.spread);
+      stage.innerHTML = '';
+      const bw = fbSize.spread ? fbSize.w * 2 : fbSize.w;
+      stage.style.width = bw + 'px'; stage.style.height = fbSize.h + 'px';
+      const book = document.createElement('div');
+      book.className = 'fb-book'; book.style.width = bw + 'px'; book.style.height = fbSize.h + 'px';
+      stage.appendChild(book);
+      book.innerHTML = buildPages(p).join('');
+      fitEntries(book);
+
+      if (!window.St || !window.St.PageFlip) {   // cadangan kalau library gagal dimuat
+        book.classList.add('fb-fallback'); stage.style.transform = '';
+        $('#fbCount').textContent = 'scroll untuk membaca';
+        return;
+      }
+      const total = book.querySelectorAll('.fb-page').length;
+      flip = new St.PageFlip(book, {
+        width: fbSize.w, height: fbSize.h, size: 'fixed', autoSize: false,
+        showCover: true, usePortrait: true, mobileScrollSupport: false,
+        maxShadowOpacity: 0.45, flippingTime: 850, startPage: Math.min(startPage, total - 1),
+      });
+      flip.loadFromHTML(book.querySelectorAll('.fb-page'));
+      flip.on('flip', () => { updateFbUI(); $('#fbTip').classList.add('hide'); });
+      flip.on('changeState', (e) => { if (e.data === 'flipping' || e.data === 'user_fold') $('#fbTip').classList.add('hide'); });
+      updateFbUI();
+    }
+
+    function updateFbUI() {
+      if (!flip) return;
+      const i = flip.getCurrentPageIndex(), n = flip.getPageCount(), inner = n - 2;
+      let shift = 0;
+      if (fbSize.spread) { if (i === 0) shift = -fbSize.w / 2; else if (i >= n - 1) shift = fbSize.w / 2; }
+      $('#fbStage').style.transform = `translateX(${shift}px)`;
+      let label;
+      if (i === 0) label = 'Sampul';
+      else if (i >= n - 1) label = 'Sampul belakang';
+      else if (fbSize.spread) label = `Halaman ${i}–${Math.min(i + 1, inner)} dari ${inner}`;
+      else label = `Halaman ${i} dari ${inner}`;
+      $('#fbCount').textContent = label;
+      $('#fbPrev').disabled = i === 0;
+      $('#fbNext').disabled = i >= n - 1;
+    }
+
+    function openDiary(p) {
+      diaryP = p;
+      const d = p.data || {};
+      const dia = $('#diary');
+      dia.style.setProperty('--c', p.color);
+      dia.classList.add('open'); dia.setAttribute('aria-hidden', 'false');
+      $('#fbTip').classList.remove('hide');
+      buildBook(p, 0);
+
+      const song = d.song || CONFIG.defaultDiarySong;
+      $('#npTitle').textContent = song?.title || 'lagu kenangan';
+      $('#npBtn').classList.toggle('muted', AudioState.muted);
+
+      // musik: lobby pelan-pelan berhenti, lagu diary mulai
+      AudioState.lobby?.pause();
+      AudioState.diary?.stop();
+      AudioState.diary = makeChannel(song, 'diary');
+      AudioState.diary?.play();
+    }
+    function closeDiary() {
+      if (!$('#diary').classList.contains('open')) return;
+      diaryClosing = true;
+      $('#diary').classList.remove('open'); $('#diary').setAttribute('aria-hidden', 'true');
+      AudioState.diary?.stop(); AudioState.diary = null;
+      AudioState.lobby?.play();
+      setTimeout(() => {
+        diaryClosing = false;
+        if (!$('#diary').classList.contains('open')) { if (flip) { try { flip.destroy(); } catch (e) { } flip = null; } $('#fbStage').innerHTML = ''; }
+      }, 600);
+      diaryP = null;
+    }
+    addEventListener('resize', () => {
+      clearTimeout(fbResizeT);
+      fbResizeT = setTimeout(() => {
+        if (!diaryP || !$('#diary').classList.contains('open')) return;
+        const s = bookSize();
+        if (s.w === fbSize.w && s.h === fbSize.h && s.spread === fbSize.spread) return;
+        buildBook(diaryP, flip ? flip.getCurrentPageIndex() : 0);
+      }, 250);
+    });
+
+    function openLightbox(i) {
+      if (!lbList.length) return;
+      lbIdx = (i + lbList.length) % lbList.length;
+      $('#lbImg').src = lbList[lbIdx].src; $('#lbCap').textContent = lbList[lbIdx].cap;
+      $('#lightbox').classList.add('open');
+      $('#lbPrev').style.display = $('#lbNext').style.display = lbList.length > 1 ? '' : 'none';
+    }
+    function closeLightbox() { $('#lightbox').classList.remove('open'); }
+
+    function closeTop() {
+      if ($('#lightbox').classList.contains('open')) return closeLightbox();
+      if ($('#diary').classList.contains('open')) return closeDiary();
+      if ($('#lockModal').classList.contains('open')) return closeLock();
+      if ($('#directory').classList.contains('open')) return closeDirectory();
+      unfocus();
+    }
+
+    function initOverlays() {
+      $('#lockForm').addEventListener('submit', submitLock);
+      $('#lockClose').addEventListener('click', closeLock);
+      $('#lockModal').addEventListener('click', (e) => { if (e.target.id === 'lockModal') closeLock(); });
+      $('#diaryClose').addEventListener('click', closeDiary);
+      $('#fbStage').addEventListener('click', (e) => {
+        const lb = e.target.closest('[data-lb]'); if (lb) { openLightbox(+lb.dataset.lb); return; }
+        const act = e.target.closest('[data-act]'); if (!act) return;
+        if (act.dataset.act === 'back') closeDiary();
+        if (act.dataset.act === 'relock') { const q = diaryP; closeDiary(); markLocked(q); toast(`Diary ${esc(q.name)} dikunci lagi 🔒`); }
+      });
+      $('#fbPrev').addEventListener('click', () => flip?.flipPrev());
+      $('#fbNext').addEventListener('click', () => flip?.flipNext());
+      $('#npBtn').addEventListener('click', () => setMuted(!AudioState.muted));
+      $('#lbClose').addEventListener('click', closeLightbox);
+      $('#lightbox').addEventListener('click', (e) => { if (e.target.id === 'lightbox') closeLightbox(); });
+      $('#lbPrev').addEventListener('click', () => openLightbox(lbIdx - 1));
+      $('#lbNext').addEventListener('click', () => openLightbox(lbIdx + 1));
+      addEventListener('keydown', (e) => {
+        if ($('#lightbox').classList.contains('open')) {
+          if (e.key === 'ArrowLeft') openLightbox(lbIdx - 1);
+          if (e.key === 'ArrowRight') openLightbox(lbIdx + 1);
+        } else if ($('#diary').classList.contains('open') && flip) {
+          if (e.key === 'ArrowLeft') flip.flipPrev();
+          if (e.key === 'ArrowRight') flip.flipNext();
+        }
+      });
+    }
+
+    /* =====================================================
+       BOOT
+       ===================================================== */
+    function showFatal(html) {
+      $('#enterBtn').textContent = 'Belum bisa dibuka';
+      const e = $('#introError'); e.hidden = false; e.className = 'intro-error'; e.innerHTML = html;
+    }
+    (async function boot() {
+      // Tunggu gerbang maintenance (lihat maintenance.js). Selama terkunci, data belum dimuat sama sekali.
+      if (window.MaintenanceGate) await window.MaintenanceGate.ready;
+      const ok = await loadData();
+      if (!ok) {
+        showFatal('Data museum belum ada. Jalankan <code>rahasia/build.html</code> lalu simpan hasilnya ke <code>site/data/museum.js</code>.');
+        return;
+      }
+      if (MODE === 'secure' && !MC.available) {
+        showFatal('Browser ini belum bisa membuka kunci diary. Buka website lewat alamat <b>https://</b> dengan Chrome / Safari / Firefox versi terbaru.');
+        return;
+      }
+      document.title = CONFIG.title || 'Moment to Shared';
+      $('#introTitle').textContent = CONFIG.title || 'Moment to Shared';
+      $('#brandTitle').textContent = CONFIG.title || 'Moment to Shared';
+      if (CONFIG.subtitle) $('#introSub').textContent = CONFIG.subtitle;
+      $('#introMeta').textContent = `${PEOPLE.length} kenangan · ${PEOPLE.length} kunci · 🎧 nyalakan suara`;
+      if (MODE === 'preview') document.body.classList.add('preview');
+
+      await fontsReady();
+      buildScene();
+      buildUI();
+      initControls();
+      initOverlays();
+      requestAnimationFrame(animate);
+      restoreUnlocks();
+
+      AudioState.lobby = makeChannel(CONFIG.lobbySong, 'awal');
+      const btn = $('#enterBtn');
+      btn.disabled = false; btn.textContent = 'Masuk ke Museum';
+      btn.addEventListener('click', () => {
+        entered = true;
+        document.body.classList.add('entered');
+        $('#intro').classList.add('hide');
+        AudioState.lobby?.play();
+        target.z = 1.0; target.yaw = 0;
+        $('#scene').focus();
+        dimHint();
+      }, { once: true });
+    })();
+  </script>
+</body>
+</html>

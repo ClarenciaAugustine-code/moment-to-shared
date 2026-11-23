@@ -1,0 +1,10 @@
+Taruh file lagu (.mp3) di folder ini.
+
+Wajib:
+  hannah-montana.mp3   -> lagu tampilan awal museum 3D
+  diary-default.mp3    -> lagu cadangan untuk diary yang belum punya lagu sendiri
+
+Per orang (opsional), contoh:
+  budi.mp3  -> lalu di rahasia/friends.js:  song: { src: "assets/music/budi.mp3", title: "Judul — Penyanyi" }
+
+Tips: kompres mp3 ke 128 kbps supaya website cepat dimuat.

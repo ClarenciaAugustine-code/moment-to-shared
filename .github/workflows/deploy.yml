@@ -1,0 +1,41 @@
+# Setiap kali kamu push ke branch main, isi folder site/ otomatis
+# dipublikasikan ke GitHub Pages. Alamat website tidak berubah.
+name: Deploy ke GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Pastikan folder rahasia tidak ikut
+        run: |
+          if [ -e rahasia ] || grep -rqE "window\.FRIENDS[[:space:]]*=" site/ ; then
+            echo "::error::Data mentah (rahasia/friends.js) terdeteksi! Hapus dari repo." ; exit 1
+          fi
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload folder site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
