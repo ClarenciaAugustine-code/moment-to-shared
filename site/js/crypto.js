@@ -11,7 +11,7 @@
   // Field yang BOLEH terlihat publik (nama di plakat, petunjuk, dll).
   const PUBLIC_FIELDS = ['name', 'nickname', 'icon', 'color', 'hint', 'hint2'];
   // Field yang dikunci (hanya terbuka kalau password benar).
-  const PRIVATE_FIELDS = ['title', 'cover', 'song', 'letter', 'entries', 'signoff'];
+  const PRIVATE_FIELDS = ['title', 'cover', 'photos', 'entries'];  // entries = nama lama dari photos
 
   function toB64(buf) {
     const bytes = new Uint8Array(buf);
