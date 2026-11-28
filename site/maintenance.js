@@ -11,7 +11,7 @@ window.MAINTENANCE = {
   // ✏️ Opsional: tanggal buka otomatis. Ada hitung mundur di layar,
   //    dan website kebuka sendiri saat waktunya tiba (jam WIB).
   //    Contoh: "2026-12-20T19:00"   ·   null = tanpa tanggal
-  bukaPada: null,
+  bukaPada: "2027-01-31T00:00",
 
   // ✏️ Kalimat di layar maintenance
   judul: "Pameran sedang ditata",
